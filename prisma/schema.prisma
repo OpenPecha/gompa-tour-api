@@ -1,0 +1,172 @@
+
+generator client {
+    provider             = "prisma-client-py"
+    recursive_type_depth = 5
+}
+
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+
+model Language {
+  id                    String                  @id @default(cuid())
+  code                  String                  @unique // e.g., 'en', 'dz', 'hi'
+  name                  String                  // e.g., 'English', 'Dzongkha', 'Hindi'
+  gonpaTranslations     GonpaTranslation[]
+  festivalTranslations  FestivalTranslation[]
+  statueTranslations    StatueTranslation[]
+  pilgrimTranslations   PilgrimSiteTranslation[]
+  contactTranslations   ContactTranslation[]
+}
+
+model User {
+  id       String @id @default(cuid())
+  username String @unique
+  email    String @unique
+  role     Role   @default(USER)
+}
+
+model Contact {
+  id            String              @id @default(cuid())
+  email         String
+  phone_number  String
+  gonpas        Gonpa[]
+  pilgrim_sites PilgrimSite[]
+  translations  ContactTranslation[]
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+}
+
+model ContactTranslation {
+  id           String   @id @default(cuid())
+  contact      Contact  @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  contactId    String
+  language     Language @relation(fields: [languageCode], references: [code])
+  languageCode String
+  address      String
+  city         String
+  state        String
+  postal_code  String
+  country      String
+
+  @@unique([contactId, languageCode])
+}
+
+model Gonpa {
+  id            String            @id @default(cuid())
+  image         String            // URL to image
+  geo_location  String            // URL to location
+  sect          Sect
+  type          GonpaType
+  contact       Contact           @relation(fields: [contactId], references: [id])
+  contactId     String
+  translations  GonpaTranslation[]
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+}
+
+model GonpaTranslation {
+  id                String   @id @default(cuid())
+  gonpa             Gonpa    @relation(fields: [gonpaId], references: [id], onDelete: Cascade)
+  gonpaId           String
+  language          Language @relation(fields: [languageCode], references: [code])
+  languageCode      String
+  name              String
+  description       String   @db.Text
+  description_audio String   // URL to audio file
+
+  @@unique([gonpaId, languageCode])
+}
+
+model Festival {
+  id           String               @id @default(cuid())
+  start_date   DateTime
+  end_date     DateTime
+  image        String               // URL to image
+  translations FestivalTranslation[]
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
+}
+
+model FestivalTranslation {
+  id                String   @id @default(cuid())
+  festival          Festival @relation(fields: [festivalId], references: [id], onDelete: Cascade)
+  festivalId        String
+  language          Language @relation(fields: [languageCode], references: [code])
+  languageCode      String
+  name              String
+  description       String   @db.Text
+  description_audio String   // URL to audio file
+
+  @@unique([festivalId, languageCode])
+}
+
+model Statue {
+  id           String             @id @default(cuid())
+  image        String             // URL to image
+  translations StatueTranslation[]
+  createdAt    DateTime           @default(now())
+  updatedAt    DateTime           @updatedAt
+}
+
+model StatueTranslation {
+  id                String   @id @default(cuid())
+  statue            Statue   @relation(fields: [statueId], references: [id], onDelete: Cascade)
+  statueId          String
+  language          Language @relation(fields: [languageCode], references: [code])
+  languageCode      String
+  name              String
+  description       String   @db.Text
+  description_audio String   // URL to audio file
+
+  @@unique([statueId, languageCode])
+}
+
+model PilgrimSite {
+  id            String                   @id @default(cuid())
+  image         String                   // URL to image
+  geo_location  String                   // URL to location
+  contact       Contact                  @relation(fields: [contactId], references: [id])
+  contactId     String
+  translations  PilgrimSiteTranslation[]
+  createdAt     DateTime                 @default(now())
+  updatedAt     DateTime                 @updatedAt
+}
+
+model PilgrimSiteTranslation {
+  id                String      @id @default(cuid())
+  pilgrimSite       PilgrimSite @relation(fields: [pilgrimSiteId], references: [id], onDelete: Cascade)
+  pilgrimSiteId     String
+  language          Language    @relation(fields: [languageCode], references: [code])
+  languageCode      String
+  name              String
+  description       String      @db.Text
+  description_audio String      // URL to audio file
+
+  @@unique([pilgrimSiteId, languageCode])
+}
+
+enum Role {
+  ADMIN
+  USER
+}
+
+enum Sect {
+  NYINGMA
+  KAGYU
+  SAKYA
+  GELUG
+  BHON
+  OTHER
+}
+
+enum GonpaType {
+  MONASTERY
+  NUNNERY
+  TEMPLE
+  NGAKPA
+  OTHER
+}
