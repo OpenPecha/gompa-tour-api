@@ -51,7 +51,7 @@ async def get_gonpa_type(type: GonpaType, db: Prisma = Depends(get_db)):
     return await db.gonpa.find_many(where={"type": type})
 
 @router.get("/{gonpa_id}")
-async def get_gonpa(gonpa_id: int, db: Prisma = Depends(get_db)):
+async def get_gonpa(gonpa_id: str, db: Prisma = Depends(get_db)):
     gonpa = await db.gonpa.find_first(
         where={"id": gonpa_id},
         include={
