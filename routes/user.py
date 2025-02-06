@@ -19,7 +19,6 @@ class UserCreate(UserBase):
 
 class UserUpdate(BaseModel):
     username: Optional[str] = None
-    email: Optional[EmailStr] = None
     role: Optional[Role] = None
 
 class UserResponse(UserBase):
@@ -58,32 +57,32 @@ async def get_users(db: Prisma = Depends(get_db)):
     return users
 
 # Get a specific user by ID
-@router.get("/{user_id}", response_model=UserResponse)
-async def get_user(user_id: str, db: Prisma = Depends(get_db)):
-    user = await db.user.find_unique(where={"id": user_id})
+@router.get("/{user_email}", response_model=UserResponse)
+async def get_user(user_email: str, db: Prisma = Depends(get_db)):
+    user = await db.user.find_unique(where={"email": user_email})
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     return user
 
 # Update a user
-@router.put("/{user_id}", response_model=UserResponse)
-async def update_user(user_id: str, user: UserUpdate, db: Prisma = Depends(get_db)):
-    existing_user = await db.user.find_unique(where={"id": user_id})
+@router.put("/{user_email}", response_model=UserResponse)
+async def update_user(user_email: str, user: UserUpdate, db: Prisma = Depends(get_db)):
+    existing_user = await db.user.find_unique(where={"email": user_email})
     if not existing_user:
         raise HTTPException(status_code=404, detail="User not found")
 
     updated_user = await db.user.update(
-        where={"id": user_id},
+        where={"email": user_email},
         data=user.dict(exclude_unset=True),
     )
     return updated_user
 
 # Delete a user
-@router.delete("/{user_id}")
-async def delete_user(user_id: str, db: Prisma = Depends(get_db)):
-    user = await db.user.find_unique(where={"id": user_id})
+@router.delete("/{user_email}")
+async def delete_user(user_email: str, db: Prisma = Depends(get_db)):
+    user = await db.user.find_unique(where={"email": user_email})
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
-    await db.user.delete(where={"id": user_id})
+    await db.user.delete(where={"email": user_email})
     return {"message": "User deleted successfully"}
