@@ -29,9 +29,17 @@ class UserResponse(UserBase):
         from_attributes = True
 
 # Create a new user
+
 @router.post("/", response_model=UserResponse)
 async def create_user(user: UserCreate, db: Prisma = Depends(get_db)):
     try:
+        # Check if the user already exists by email
+        existing_user = await db.user.find_unique(where={"email": user.email})
+        
+        if existing_user:
+            return existing_user  # Return existing user if found
+        
+        # Create new user if not found
         new_user = await db.user.create(
             data={
                 "username": user.username,
