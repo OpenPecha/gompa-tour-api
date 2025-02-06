@@ -232,7 +232,7 @@ async def delete_gonpa_translation(
         raise HTTPException(status_code=400, detail=str(e))
     
 @router.delete("/{gonpa_id}")
-async def delete_pilgrim_site(gonpa_id: str, db: Prisma = Depends(get_db)):
+async def delete_gompa_site(gonpa_id: str, db: Prisma = Depends(get_db)):
     try:
         existing_gonpa = await db.gonpa.find_first(where={"id": gonpa_id})
         if not existing_gonpa:

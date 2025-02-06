@@ -155,7 +155,7 @@ async def delete_festival_translation(
     
 
 @router.delete("/{fest_id}")
-async def delete_pilgrim_site(fest_id: str, db: Prisma = Depends(get_db)):
+async def delete_fest_site(fest_id: str, db: Prisma = Depends(get_db)):
     try:
         existing_gonpa = await db.festival.find_first(where={"id": fest_id})
         if not existing_gonpa:
