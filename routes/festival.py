@@ -107,6 +107,7 @@ async def add_festival_translation(
 
 @router.delete("/{festival_id}/translations/{language_code}")
 async def delete_festival_translation(
+
     festival_id: str,
     language_code: str,
     db: Prisma = Depends(get_db)
@@ -151,3 +152,22 @@ async def delete_festival_translation(
         }
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
+    
+
+@router.delete("/{fest_id}")
+async def delete_pilgrim_site(fest_id: str, db: Prisma = Depends(get_db)):
+    try:
+        existing_gonpa = await db.festival.find_first(where={"id": fest_id})
+        if not existing_gonpa:
+            raise HTTPException(status_code=404, detail="festival not found")
+            
+        deleted_site = await db.festival.delete(
+            where={"id": fest_id},
+            include={
+                "translations": True
+            }
+        )
+        return {"message": "festival site deleted successfully", "site": deleted_site}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    
