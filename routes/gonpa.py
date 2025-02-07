@@ -3,7 +3,7 @@ from prisma import Prisma
 from typing import Optional
 from Config.connection import get_db
 from typing import List
-from model.gonpa import GonpaCreate,GonpaTranslationCreate
+from model.gonpa import GonpaCreate,GonpaTranslationCreate,GonpaUpdate
 from model.enum import Sect, GonpaType
 
 router = APIRouter(
@@ -67,10 +67,11 @@ async def get_gonpa(gonpa_id: str, db: Prisma = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Gonpa not found")
     return gonpa
 
+
 @router.put("/{gonpa_id}")
 async def update_gonpa(
-    gonpa_id: int, 
-    gonpa_update: GonpaCreate, 
+    gonpa_id: str, 
+    gonpa_update: GonpaUpdate, 
     db: Prisma = Depends(get_db)
 ):
     try:
@@ -79,43 +80,50 @@ async def update_gonpa(
         if not existing_gonpa:
             raise HTTPException(status_code=404, detail="Gonpa not found")
 
-        # Update translations by deleting old ones and inserting new ones
-        await db.gonpatranslation.delete_many(where={"gonpaId": gonpa_id})
+        # If translations are provided, delete old ones before inserting new ones
+        if gonpa_update.translations:
+            await db.gonpatranslation.delete_many(where={"gonpaId": gonpa_id})
+
+        # Correctly structured translation data for Prisma
         translations_data = [
             {
-                "language": {"connect": {"code": t.languageCode}},
+                "languageCode": t.languageCode,
                 "name": t.name,
                 "description": t.description,
                 "description_audio": t.description_audio,
-                "gonpa": {"connect": {"id": gonpa_id}}
             }
             for t in gonpa_update.translations
-        ]
+        ] if gonpa_update.translations else []
+
+        # Prepare update data
+        update_data = {
+            "image": gonpa_update.image,
+            "geo_location": gonpa_update.geo_location,
+            "sect": gonpa_update.sect,
+            "type": gonpa_update.type,
+            "translations": {
+                "createMany": {
+                    "data": translations_data
+                }
+            } if translations_data else {}
+        }
+
+        # Ensure `contact` is only updated if provided
+        if gonpa_update.contactId:
+            update_data["contact"] = {"connect": {"id": gonpa_update.contactId}}
 
         # Perform the update
         updated_gonpa = await db.gonpa.update(
             where={"id": gonpa_id},
-            data={
-                "image": gonpa_update.image,
-                "geo_location": gonpa_update.geo_location,
-                "sect": gonpa_update.sect,
-                "type": gonpa_update.type,
-                "contact": {"connect": {"id": gonpa_update.contactId}},
-                "translations": {
-                    "create": translations_data
-                }
-            },
-            include={
-                "translations": True,
-                "contact": True
-            }
+            data=update_data,
+            include={"translations": True, "contact": True}
         )
 
         return updated_gonpa
+
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
-
-
+    
 @router.get("/")
 async def get_gonpas(
     sect: Optional[Sect] = None,

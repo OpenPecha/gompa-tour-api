@@ -32,7 +32,7 @@ model User {
 model Contact {
   id            String              @id @default(cuid())
   email         String
-  phone_number  String
+  phone_number  String?
   gonpas        Gonpa[]
   pilgrim_sites PilgrimSite[]
   translations  ContactTranslation[]
@@ -49,7 +49,7 @@ model ContactTranslation {
   address      String
   city         String
   state        String
-  postal_code  String
+  postal_code  String?
   country      String
 
   @@unique([contactId, languageCode])
@@ -61,8 +61,8 @@ model Gonpa {
   geo_location  String            // URL to location
   sect          Sect
   type          GonpaType
-  contact       Contact           @relation(fields: [contactId], references: [id])
-  contactId     String
+  contact       Contact?           @relation(fields: [contactId], references: [id])
+  contactId     String?
   translations  GonpaTranslation[]
   createdAt     DateTime          @default(now())
   updatedAt     DateTime          @updatedAt
@@ -85,9 +85,9 @@ model Festival {
   id           String               @id @default(cuid())
   start_date   DateTime
   end_date     DateTime
-  image        String               // URL to image
+  image        String?               // URL to image
   translations FestivalTranslation[]
-  createdAt    DateTime             @default(now())
+  createdAt    DateTime?             @default(now())
   updatedAt    DateTime             @updatedAt
 }
 
@@ -112,6 +112,7 @@ model Statue {
   updatedAt    DateTime           @updatedAt
 }
 
+
 model StatueTranslation {
   id                String   @id @default(cuid())
   statue            Statue   @relation(fields: [statueId], references: [id], onDelete: Cascade)
@@ -129,8 +130,8 @@ model PilgrimSite {
   id            String                   @id @default(cuid())
   image         String                   // URL to image
   geo_location  String                   // URL to location
-  contact       Contact                  @relation(fields: [contactId], references: [id])
-  contactId     String
+  contact       Contact?               @relation(fields: [contactId], references: [id])
+  contactId     String?
   translations  PilgrimSiteTranslation[]
   createdAt     DateTime                 @default(now())
   updatedAt     DateTime                 @updatedAt

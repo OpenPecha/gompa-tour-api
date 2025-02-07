@@ -3,7 +3,7 @@ from prisma import Prisma
 from typing import Optional
 from Config.connection import get_db
 from typing import List
-from model.pilgrim import PilgrimSiteCreate,PilgrimSiteTranslationCreate
+from model.pilgrim import PilgrimSiteCreate,PilgrimSiteTranslationCreate,PilgrimSiteUpdate
 
 router = APIRouter(
 )
@@ -20,22 +20,26 @@ async def create_pilgrim_site(pilgrim_site: PilgrimSiteCreate, db: Prisma = Depe
             }
             for t in pilgrim_site.translations
         ]
-        
+
+        # Prepare the data dictionary
+        site_data = {
+            "image": pilgrim_site.image,
+            "geo_location": pilgrim_site.geo_location,
+            "translations": {"create": translations_data}
+        }
+
+        # ✅ Only include `contact` if `contactId` is provided
+        if pilgrim_site.contactId:
+            site_data["contact"] = {"connect": {"id": pilgrim_site.contactId}}
+
+        # Create the Pilgrim Site
         created_site = await db.pilgrimsite.create(
-            data={
-                "image": pilgrim_site.image,
-                "geo_location": pilgrim_site.geo_location,
-                "contact": {"connect": {"id": pilgrim_site.contactId}},
-                "translations": {
-                    "create": translations_data
-                }
-            },
-            include={
-                "translations": True,
-                "contact": True
-            }
+            data=site_data,
+            include={"translations": True, "contact": True}
         )
+
         return created_site
+
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -59,7 +63,7 @@ async def get_pilgrim_site(site_id: str, db: Prisma = Depends(get_db)):
 @router.put("/{site_id}")
 async def update_pilgrim_site(
     site_id: str, 
-    site_update: PilgrimSiteCreate, 
+    site_update: PilgrimSiteUpdate, 
     db: Prisma = Depends(get_db)
 ):
     try:
@@ -69,29 +73,36 @@ async def update_pilgrim_site(
             raise HTTPException(status_code=404, detail="Pilgrim site not found")
 
         # Update translations by deleting old ones and inserting new ones
-        await db.pilgrimsitetranslation.delete_many(where={"pilgrimSiteId": site_id})
+        if site_update.translations:
+            await db.pilgrimsitetranslation.delete_many(where={"pilgrimSiteId": site_id})
+        
         translations_data = [
             {
-                "language": {"connect": {"code": t.languageCode}},
+                "languageCode": t.languageCode,
                 "name": t.name,
                 "description": t.description,
                 "description_audio": t.description_audio,
-                "pilgrimSite": {"connect": {"id": site_id}}
             }
             for t in site_update.translations
-        ]
+        ] if site_update.translations else []
+
+        update_data = {
+            "image": site_update.image,
+            "geo_location": site_update.geo_location,
+            "translations": {
+                "createMany": {
+                    "data": translations_data
+                }
+            } if translations_data else {}
+        }
+    
+        if site_update.contactId:
+            update_data["contact"] = {"connect": {"id": site_update.contactId}}
 
         # Perform the update
         updated_site = await db.pilgrimsite.update(
             where={"id": site_id},
-            data={
-                "image": site_update.image,
-                "geo_location": site_update.geo_location,
-                "contact": {"connect": {"id": site_update.contactId}},
-                "translations": {
-                    "create": translations_data
-                }
-            },
+            data=update_data,
             include={
                 "translations": True,
                 "contact": True

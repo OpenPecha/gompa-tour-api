@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from typing import List
+from typing import List,Optional
 from datetime import datetime
 
 class PilgrimSiteTranslationBase(BaseModel):
@@ -21,9 +21,13 @@ class PilgrimSiteTranslation(PilgrimSiteTranslationBase):
 class PilgrimSiteBase(BaseModel):
     image: str
     geo_location: str
-    contactId: str
+    contactId: Optional[str]
 
 class PilgrimSiteCreate(PilgrimSiteBase):
+    translations: List[PilgrimSiteTranslationBase]
+
+
+class PilgrimSiteUpdate(PilgrimSiteBase):
     translations: List[PilgrimSiteTranslationBase]
 
 class PilgrimSite(PilgrimSiteBase):
