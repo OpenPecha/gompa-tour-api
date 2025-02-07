@@ -181,6 +181,9 @@ async def update_festival(
         if not existing_festival:
             raise HTTPException(status_code=404, detail="Festival not found")
 
+        if festival_data.translations:
+            await db.festivaltranslation.delete_many(where={"festivalId": festival_id})
+        
         # Prepare update data
         update_data = {}
         if festival_data.start_date:
@@ -190,7 +193,24 @@ async def update_festival(
         if festival_data.image:
             update_data["image"] = festival_data.image
 
+        translations_data = [
+            {
+                "languageCode": t.languageCode,
+                "name": t.name,
+                "description": t.description,
+                "description_audio": t.description_audio,
+            }
+            for t in festival_data.translations
+        ] if festival_data.translations else []
         # Update festival details
+
+
+        update_data["translations"] = {
+                "createMany": {
+                    "data": translations_data
+                }
+            } if translations_data else {}
+        
         updated_festival = await db.festival.update(
             where={"id": festival_id},
             data=update_data,
@@ -203,47 +223,47 @@ async def update_festival(
         raise HTTPException(status_code=400, detail=str(e))
 
 
-@router.put("/{festival_id}/translations/{language_code}")
-async def update_festival_translation(
-    festival_id: str,
-    language_code: str,
-    translation_data: FestivalTranslationUpdate,
-    db: Prisma = Depends(get_db)
-):
-    try:
-        # Check if translation exists
-        existing_translation = await db.festivaltranslation.find_first(
-            where={
-                "festivalId": festival_id,
-                "languageCode": language_code
-            }
-        )
-        if not existing_translation:
-            raise HTTPException(
-                status_code=404,
-                detail=f"Translation for language {language_code} not found"
-            )
+# @router.put("/{festival_id}/translations/{language_code}")
+# async def update_festival_translation(
+#     festival_id: str,
+#     language_code: str,
+#     translation_data: FestivalTranslationUpdate,
+#     db: Prisma = Depends(get_db)
+# ):
+#     try:
+#         # Check if translation exists
+#         existing_translation = await db.festivaltranslation.find_first(
+#             where={
+#                 "festivalId": festival_id,
+#                 "languageCode": language_code
+#             }
+#         )
+#         if not existing_translation:
+#             raise HTTPException(
+#                 status_code=404,
+#                 detail=f"Translation for language {language_code} not found"
+#             )
 
-        # Prepare update data
-        update_data = {}
-        if translation_data.name:
-            update_data["name"] = translation_data.name
-        if translation_data.description:
-            update_data["description"] = translation_data.description
-        if translation_data.description_audio:
-            update_data["description_audio"] = translation_data.description_audio
+#         # Prepare update data
+#         update_data = {}
+#         if translation_data.name:
+#             update_data["name"] = translation_data.name
+#         if translation_data.description:
+#             update_data["description"] = translation_data.description
+#         if translation_data.description_audio:
+#             update_data["description_audio"] = translation_data.description_audio
 
-        # Update the translation
-        updated_translation = await db.festivaltranslation.update(
-            where={"id": existing_translation.id},
-            data=update_data
-        )
+#         # Update the translation
+#         updated_translation = await db.festivaltranslation.update(
+#             where={"id": existing_translation.id},
+#             data=update_data
+#         )
 
-        return {
-            "message": f"Translation for language {language_code} updated successfully",
-            "translation": updated_translation
-        }
+#         return {
+#             "message": f"Translation for language {language_code} updated successfully",
+#             "translation": updated_translation
+#         }
 
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+#     except Exception as e:
+#         raise HTTPException(status_code=400, detail=str(e))
 
