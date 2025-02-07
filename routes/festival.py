@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException, Depends
 from prisma import Prisma
 from typing import Optional, List
 from Config.connection import get_db
-from model.festival import FestivalCreate,festivalTranslationCreate
+from model.festival import FestivalCreate,festivalTranslationCreate,FestivalTranslationUpdate,FestivalUpdate
 
 router = APIRouter()
 
@@ -63,8 +63,6 @@ async def get_festivals(
         include={"translations": True}
     )
     return festivals
-
-
 
 @router.post("/{festival_id}/translations")
 async def add_festival_translation(
@@ -171,3 +169,81 @@ async def delete_fest_site(fest_id: str, db: Prisma = Depends(get_db)):
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
     
+
+@router.put("/{festival_id}")
+async def update_festival(
+    festival_id: str,
+    festival_data: FestivalUpdate,
+    db: Prisma = Depends(get_db)
+):
+    try:
+        existing_festival = await db.festival.find_first(where={"id": festival_id})
+        if not existing_festival:
+            raise HTTPException(status_code=404, detail="Festival not found")
+
+        # Prepare update data
+        update_data = {}
+        if festival_data.start_date:
+            update_data["start_date"] = festival_data.start_date
+        if festival_data.end_date:
+            update_data["end_date"] = festival_data.end_date
+        if festival_data.image:
+            update_data["image"] = festival_data.image
+
+        # Update festival details
+        updated_festival = await db.festival.update(
+            where={"id": festival_id},
+            data=update_data,
+            include={"translations": True}
+        )
+
+        return {"message": "Festival updated successfully", "festival": updated_festival}
+
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.put("/{festival_id}/translations/{language_code}")
+async def update_festival_translation(
+    festival_id: str,
+    language_code: str,
+    translation_data: FestivalTranslationUpdate,
+    db: Prisma = Depends(get_db)
+):
+    try:
+        # Check if translation exists
+        existing_translation = await db.festivaltranslation.find_first(
+            where={
+                "festivalId": festival_id,
+                "languageCode": language_code
+            }
+        )
+        if not existing_translation:
+            raise HTTPException(
+                status_code=404,
+                detail=f"Translation for language {language_code} not found"
+            )
+
+        # Prepare update data
+        update_data = {}
+        if translation_data.name:
+            update_data["name"] = translation_data.name
+        if translation_data.description:
+            update_data["description"] = translation_data.description
+        if translation_data.description_audio:
+            update_data["description_audio"] = translation_data.description_audio
+
+        # Update the translation
+        updated_translation = await db.festivaltranslation.update(
+            where={"id": existing_translation.id},
+            data=update_data
+        )
+
+        return {
+            "message": f"Translation for language {language_code} updated successfully",
+            "translation": updated_translation
+        }
+
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+

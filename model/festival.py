@@ -37,3 +37,13 @@ class festivalTranslationCreate(FestivalTranslationBase):
     languageCode: str
     description: str
     description_audio: Optional[str]
+
+class FestivalUpdate(BaseModel):
+    start_date: Optional[datetime] = None
+    end_date: Optional[datetime] = None
+    image: Optional[str] = None
+
+class FestivalTranslationUpdate(BaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+    description_audio: Optional[str] = None
