@@ -161,6 +161,10 @@ enum Sect {
   SAKYA
   GELUG
   BHON
+  REMEY
+  JONANG
+  SHALU
+  BODONG 
   OTHER
 }
 
