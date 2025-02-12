@@ -45,6 +45,7 @@ app.include_router(user_router,prefix='/user',tags=["user"])
 app.include_router(festival_router,prefix='/festival',tags=["festival"])
 app.include_router(pilgrim_router,prefix='/pilgrim',tags=["pilgrim"])
 
+
 def get_port():
     """Retrieve the PORT from environment variables, defaulting to 8000 if not set."""
     port = os.getenv("PORT", 8000)  # Default to 8000 if PORT is not set

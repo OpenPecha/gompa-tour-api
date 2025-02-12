@@ -46,6 +46,10 @@ async def create_gonpa(gonpa: GonpaCreate, db: Prisma = Depends(get_db)):
 async def get_gonpa_types():
     return [e.value for e in GonpaType]
 
+@router.get("/sections",response_model=List[str])
+async def get_gonpa_types():
+    return [e.value for e in Sect]
+
 @router.get("/types/{type}")
 async def get_gonpa_type(type: GonpaType, db: Prisma = Depends(get_db)):
     return await db.gonpa.find_many(where={"type": type})
