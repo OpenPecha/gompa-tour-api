@@ -10,15 +10,9 @@ class Sect(str, Enum):
     SAKYA = "SAKYA"
     GELUG = "GELUG"
     BHON = "BHON"
-    REMEY= "REMEY"
-    JONANG= "JONANG"
-    SHALU = "SHALU"
-    BODONG = "BODONG"
     OTHER = "OTHER"
 
 class GonpaType(str, Enum):
     MONASTERY = "MONASTERY"
     NUNNERY = "NUNNERY"
     TEMPLE = "TEMPLE"
-    NGAKPA = "NGAKPA"
-    OTHER = "OTHER"
