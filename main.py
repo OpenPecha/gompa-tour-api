@@ -14,6 +14,7 @@ from routes.statue import router as statue_router
 from routes.user import router as user_router
 from routes.festival import router as festival_router
 from routes.pilgrim import router as pilgrim_router
+from routes.s3 import router as s3Route
 
 from contextlib import asynccontextmanager
 
@@ -44,7 +45,7 @@ app.include_router(statue_router,prefix='/statue',tags=["statue"])
 app.include_router(user_router,prefix='/user',tags=["user"])
 app.include_router(festival_router,prefix='/festival',tags=["festival"])
 app.include_router(pilgrim_router,prefix='/pilgrim',tags=["pilgrim"])
-
+app.include_router(s3Route, prefix="/api/upload",tags=["file upload"])
 
 def get_port():
     """Retrieve the PORT from environment variables, defaulting to 8000 if not set."""
