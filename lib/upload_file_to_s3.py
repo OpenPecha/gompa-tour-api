@@ -28,7 +28,8 @@ async def upload_file_to_s3(file: Any, content_type: str, filename: str) -> str:
                 filename,
                 ExtraArgs={"ContentType": content_type}
             )
-            file_url = f"https://{AWS_S3_BUCKET_NAME}.s3.{AWS_S3_REGION_NAME}.amazonaws.com/{filename}"
+            file_url = f"https://s3.{AWS_S3_REGION_NAME}.amazonaws.com/{AWS_S3_BUCKET_NAME}/{filename}"
+
             return file_url
         except NoCredentialsError:
             raise ValueError("AWS credentials not found")
